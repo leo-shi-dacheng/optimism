@@ -46,7 +46,7 @@ build-go-ffi: build-go-ffi-default build-go-ffi-cannon64
 
 # Cleans build artifacts and deployments.
 clean:
-  rm -rf ./artifacts ./forge-artifacts ./cache ./scripts/go-ffi/go-ffi ./deployments/hardhat/*
+  rm -rf ./artifacts ./forge-artifacts ./cache ./scripts/go-ffi/go-ffi ./deployments/hardhat/* ./deploy-config
 
 
 ########################################################
@@ -81,13 +81,33 @@ coverage-lcov: build-go-ffi
 #                        DEPLOY                        #
 ########################################################
 
+# Deploys the contracts with proper file handling
+deploy:
+    #!/usr/bin/env bash
+    # Create a temporary config directory in the contracts folder
+    mkdir -p ./deploy-config
+
+    # Copy the config file to the local directory
+    if [[ -n "$DEPLOY_CONFIG_PATH" ]]; then
+        echo "Copying config from $DEPLOY_CONFIG_PATH to local directory..."
+        cp "$DEPLOY_CONFIG_PATH" ./deploy-config/sepolia.json
+
+        # Export the relative path for the deploy script
+        export DEPLOY_CONFIG_PATH="./deploy-config/sepolia.json"
+
+        # Run deployment
+        ./scripts/deploy/deploy.sh
+
+        # Clean up
+        rm -rf ./deploy-config
+    else
+        echo "Error: DEPLOY_CONFIG_PATH is not set"
+        exit 1
+    fi
+
 # Generates the L2 genesis state.
 genesis:
   forge script scripts/L2Genesis.s.sol:L2Genesis --sig 'runWithStateDump()'
-
-# Deploys the contracts.
-deploy:
-  ./scripts/deploy/deploy.sh
 
 
 ########################################################
