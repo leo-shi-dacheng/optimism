@@ -70,6 +70,9 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     ///         a call to finalizeWithdrawalTransaction.
     address public l2Sender;
 
+    // 添加 owner 变量
+    address public owner;
+
     /// @notice A list of withdrawal hashes which have been successfully finalized.
     mapping(bytes32 => bool) public finalizedWithdrawals;
 
@@ -139,6 +142,16 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     /// @param success        Whether the withdrawal transaction was successful.
     event WithdrawalFinalized(bytes32 indexed withdrawalHash, bool success);
 
+    // 添加暂停事件
+    event PortalPaused(address indexed account);
+    event PortalUnpaused(address indexed account);
+
+    /// 添加 onlyOwner 修饰符
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Caller is not the owner");
+        _;
+    }
+
     /// @notice Reverts when paused.
     modifier whenNotPaused() {
         if (paused()) revert CallPaused();
@@ -179,6 +192,9 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
             l2Sender = Constants.DEFAULT_L2_SENDER;
         }
         __ResourceMetering_init();
+
+        // 设置 owner
+        owner = msg.sender;
     }
 
     /// @notice Getter for the balance of the contract.
@@ -197,6 +213,20 @@ contract OptimismPortal is Initializable, ResourceMetering, ISemver {
     /// @custom:legacy
     function guardian() public view returns (address) {
         return superchainConfig.guardian();
+    }
+
+    // 添加暂停功能
+    function pause() external onlyOwner {
+        // 调用 superchainConfig 的暂停功能
+        superchainConfig.pause("PORTAL_ADMIN_PAUSE");
+        emit PortalPaused(msg.sender);
+    }
+
+    // 添加恢复功能
+    function unpause() external onlyOwner {
+        // 调用 superchainConfig 的恢复功能
+        superchainConfig.unpause();
+        emit PortalUnpaused(msg.sender);
     }
 
     /// @notice Getter for the current paused status.
