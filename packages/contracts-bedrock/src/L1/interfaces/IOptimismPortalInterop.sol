@@ -43,6 +43,8 @@ interface IOptimismPortalInterop {
     event WithdrawalFinalized(bytes32 indexed withdrawalHash, bool success);
     event WithdrawalProven(bytes32 indexed withdrawalHash, address indexed from, address indexed to);
     event WithdrawalProvenExtension1(bytes32 indexed withdrawalHash, address indexed proofSubmitter);
+    event PortalPaused(address indexed account);
+    event PortalUnpaused(address indexed account);
 
     receive() external payable;
 
@@ -115,6 +117,9 @@ interface IOptimismPortalInterop {
     function superchainConfig() external view returns (ISuperchainConfig);
     function systemConfig() external view returns (ISystemConfig);
     function version() external pure returns (string memory);
+    function owner() external view returns (address);
+    function pause() external;
+    function unpause() external;
 
     function __constructor__(uint256 _proofMaturityDelaySeconds, uint256 _disputeGameFinalityDelaySeconds) external;
 }
